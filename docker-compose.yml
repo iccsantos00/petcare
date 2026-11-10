@@ -1,0 +1,18 @@
+# Sobe o MySQL 8 já com o banco instalado (roda os scripts de banco/ em ordem: 01, 02, 03, 04).
+# Uso: docker compose up -d     |  Reinstalar do zero: docker compose down -v && docker compose up -d
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: petcare-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_so_para_instalacao   # usado só pelo DBA; a API NÃO usa root
+      TZ: America/Sao_Paulo                          # NOW() dos triggers no horário de Brasília
+    ports:
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
+    volumes:
+      - ./banco:/docker-entrypoint-initdb.d:ro
+      - petcare-dados:/var/lib/mysql
+
+volumes:
+  petcare-dados:

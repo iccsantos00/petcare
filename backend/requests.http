@@ -1,0 +1,56 @@
+### Testes rápidos da API (IntelliJ: abra e clique no ▶ | VS Code: extensão "REST Client")
+### Troque os IDs pelos que aparecem nas listagens.
+
+### Com qual usuário do MySQL a API está conectada? (prova de que não é root)
+GET http://localhost:8080/api/info
+
+### ENTIDADE: tutores
+GET http://localhost:8080/api/tutores
+
+### ENTIDADE: pets de um tutor (com idade calculada pela fn_calcular_idade)
+GET http://localhost:8080/api/tutores/COLE_O_ID_DO_TUTOR/pets
+
+### VIEW 1: agenda
+GET http://localhost:8080/api/consultas/agenda
+
+### VIEW 2: histórico clínico de um pet
+GET http://localhost:8080/api/pets/COLE_O_ID_DO_PET/historico-clinico
+
+### PROCEDURE 1: agendar (data no passado -> erro do TRIGGER 1)
+POST http://localhost:8080/api/consultas
+Content-Type: application/json
+
+{
+  "idPet": "COLE_O_ID_DO_PET",
+  "idVeterinario": "COLE_O_ID_DO_VET",
+  "dataHora": "2026-12-01T10:00:00",
+  "motivo": "Consulta de rotina",
+  "valor": 150.00
+}
+
+### Mudar status para EM_ATENDIMENTO
+PATCH http://localhost:8080/api/consultas/COLE_O_ID_DA_CONSULTA/status?valor=EM_ATENDIMENTO
+
+### PROCEDURE 3 (TCL): finalizar SEM diagnóstico -> ROLLBACK, consulta continua EM_ATENDIMENTO
+POST http://localhost:8080/api/consultas/COLE_O_ID_DA_CONSULTA/finalizar
+Content-Type: application/json
+
+{ "anamnese": "Mancando", "diagnostico": "", "conduta": "Repouso" }
+
+### PROCEDURE 3 (TCL): finalizar COM diagnóstico -> COMMIT
+POST http://localhost:8080/api/consultas/COLE_O_ID_DA_CONSULTA/finalizar
+Content-Type: application/json
+
+{ "anamnese": "Mancando", "diagnostico": "Entorse leve", "conduta": "Repouso por 5 dias" }
+
+### PROCEDURE 2: registrar vacinação (sem proximaDose -> procedure calcula +1 ano)
+POST http://localhost:8080/api/vacinacoes
+Content-Type: application/json
+
+{
+  "idPet": "COLE_O_ID_DO_PET",
+  "idVacina": "COLE_O_ID_DA_VACINA",
+  "idVeterinario": "COLE_O_ID_DO_VET",
+  "dataAplicacao": "2026-11-10",
+  "lote": "L-123"
+}

@@ -1,0 +1,158 @@
+@startuml DER_PetCare
+' DER do PetCare - notação pé de galinha (Crow's Foot)
+' Gerar imagem: https://www.plantuml.com/plantuml ou extensão PlantUML do VS Code/IntelliJ
+hide circle
+skinparam shadowing false
+skinparam class {
+  BackgroundColor White
+  BorderColor #333333
+}
+
+entity grupos_usuarios {
+  * id_grupo : VARCHAR(40) <<PK>>
+  --
+  * nome : VARCHAR(60) <<UK>>
+  descricao : VARCHAR(255)
+  criado_em : TIMESTAMP
+}
+
+entity usuarios {
+  * id_usuario : VARCHAR(40) <<PK>>
+  --
+  * id_grupo : VARCHAR(40) <<FK>>
+  * nome : VARCHAR(120)
+  * email : VARCHAR(160) <<UK>>
+  * senha_hash : VARCHAR(255)
+  telefone : VARCHAR(20)
+  ativo : BOOLEAN
+  criado_em : TIMESTAMP
+  atualizado_em : TIMESTAMP
+}
+
+entity tutores {
+  * id_tutor : VARCHAR(40) <<PK>>
+  --
+  * id_usuario : VARCHAR(40) <<FK, UK>>
+  * cpf : CHAR(11) <<UK>>
+  data_nascimento : DATE
+  logradouro, numero, complemento,
+  bairro, cidade, uf, cep
+}
+
+entity veterinarios {
+  * id_veterinario : VARCHAR(40) <<PK>>
+  --
+  * id_usuario : VARCHAR(40) <<FK, UK>>
+  * crmv : VARCHAR(30) <<UK>>
+  especialidade : VARCHAR(100)
+  ativo : BOOLEAN
+}
+
+entity pets {
+  * id_pet : VARCHAR(40) <<PK>>
+  --
+  * id_tutor : VARCHAR(40) <<FK>>
+  * nome : VARCHAR(80)
+  * especie : VARCHAR(40)
+  raca : VARCHAR(80)
+  sexo : ENUM
+  data_nascimento : DATE
+  peso_kg : DECIMAL(6,2)
+  porte : ENUM
+  alergias : TEXT
+  observacoes : TEXT
+  ativo : BOOLEAN
+}
+
+entity consultas {
+  * id_consulta : VARCHAR(40) <<PK>>
+  --
+  * id_pet : VARCHAR(40) <<FK>>
+  * id_veterinario : VARCHAR(40) <<FK>>
+  * data_hora : DATETIME
+  * motivo : VARCHAR(255)
+  status : ENUM
+  valor : DECIMAL(10,2)
+  observacoes : TEXT
+}
+
+entity prontuarios {
+  * id_prontuario : VARCHAR(40) <<PK>>
+  --
+  * id_consulta : VARCHAR(40) <<FK, UK>>
+  anamnese : TEXT
+  diagnostico : TEXT
+  conduta : TEXT
+  observacoes : TEXT
+  registrado_em : TIMESTAMP
+}
+
+entity vacinas {
+  * id_vacina : VARCHAR(40) <<PK>>
+  --
+  * nome : VARCHAR(100)
+  fabricante : VARCHAR(100)
+  especie_indicada : VARCHAR(40)
+  descricao : TEXT
+  ativo : BOOLEAN
+}
+
+entity vacinacoes {
+  * id_vacinacao : VARCHAR(40) <<PK>>
+  --
+  * id_pet : VARCHAR(40) <<FK>>
+  * id_vacina : VARCHAR(40) <<FK>>
+  id_veterinario : VARCHAR(40) <<FK>>
+  * data_aplicacao : DATE
+  proxima_dose : DATE
+  lote : VARCHAR(60)
+  observacoes : TEXT
+}
+
+entity medicamentos {
+  * id_medicamento : VARCHAR(40) <<PK>>
+  --
+  * nome : VARCHAR(120)
+  principio_ativo : VARCHAR(120)
+  apresentacao : VARCHAR(80)
+  observacoes : TEXT
+  ativo : BOOLEAN
+}
+
+entity prescricoes {
+  * id_prescricao : VARCHAR(40) <<PK>>
+  --
+  * id_consulta : VARCHAR(40) <<FK>>
+  * id_medicamento : VARCHAR(40) <<FK>>
+  * dosagem : VARCHAR(100)
+  * frequencia : VARCHAR(100)
+  duracao_dias : INT
+  instrucoes : TEXT
+}
+
+entity exames {
+  * id_exame : VARCHAR(40) <<PK>>
+  --
+  * id_consulta : VARCHAR(40) <<FK>>
+  * tipo : VARCHAR(100)
+  * data_solicitacao : DATE
+  data_resultado : DATE
+  resultado : TEXT
+  arquivo_url : VARCHAR(500)
+  status : ENUM
+}
+
+grupos_usuarios ||--o{ usuarios : agrupa
+usuarios ||--o| tutores : "é"
+usuarios ||--o| veterinarios : "é"
+tutores ||--o{ pets : possui
+pets ||--o{ consultas : "é atendido em"
+veterinarios ||--o{ consultas : realiza
+consultas ||--o| prontuarios : gera
+pets ||--o{ vacinacoes : recebe
+vacinas ||--o{ vacinacoes : "aplicada em"
+veterinarios |o--o{ vacinacoes : aplica
+consultas ||--o{ prescricoes : contém
+medicamentos ||--o{ prescricoes : "prescrito em"
+consultas ||--o{ exames : solicita
+@enduml
