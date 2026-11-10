@@ -1,88 +1,72 @@
-# PetCare — Sistema de Clínica Veterinária
+# PetCare
 
-Trabalho de Banco de Dados (UCB). Banco MySQL 8 + API REST em Spring Boot + frontend web.
+Sistema de clínica veterinária feito para a disciplina de Banco de Dados (UCB).
+Banco em MySQL, API em Spring Boot e frontend web.
 
-## Estrutura
+## Pastas
 
-```
-petcare/
-├── banco/                     scripts do MySQL (rodar em ordem)
-│   ├── 01_estrutura.sql       banco, funções de ID, tabelas, índices
-│   ├── 02_dados.sql           dados de exemplo (antes dos triggers, ver comentário)
-│   ├── 03_programacao.sql     3 triggers, 2 views, 3 procedures
-│   ├── 04_seguranca.sql       roles e usuários (controle de acesso)
-│   └── demos/                 scripts para a apresentação (TCL, acesso, índices)
-├── backend/                   API Spring Boot (Java 17)
-│   ├── src/main/java/br/com/petcare/PetCareController.java   todos os endpoints
-│   ├── src/main/resources/application.properties             conexão (usuário da aplicação)
-│   └── requests.http          chamadas prontas para testar a API
-├── docs/
-│   ├── API.md                 contrato da API (para quem faz o frontend)
-│   ├── der.puml               DER em PlantUML (editável) + DER_PetCare.png
-│   ├── JUSTIFICATIVAS.md      justificativa de cada item (base para o artigo)
-│   └── ROTEIRO_APRESENTACAO.md  roteiro de 5 min + perguntas prováveis
-└── docker-compose.yml         sobe o MySQL já instalado (opcional)
-```
+- `banco/` – scripts do MySQL, executados na ordem 01 a 04
+- `banco/demos/` – scripts usados na apresentação (transações, acessos e índices)
+- `backend/` – API em Java 17 com Spring Boot
+- `docs/` – DER, documentação da API e roteiro da apresentação
 
-## Como rodar
+## Como rodar (Mac)
 
-### 1. Banco de dados
-
-**Opção A — Docker (mais simples):**
+### 1. MySQL
 
 ```bash
-docker compose up -d
+brew install mysql@8.4
+brew services start mysql@8.4
+echo 'export PATH="/opt/homebrew/opt/mysql@8.4/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
-Os 4 scripts de `banco/` rodam sozinhos na primeira subida. Para reinstalar do zero: `docker compose down -v && docker compose up -d`.
-
-**Opção B — MySQL instalado na máquina (8.0.16 ou superior):**
-
-Abra os scripts no MySQL Workbench conectado como administrador e execute na ordem 01 → 02 → 03 → 04. Ou pelo terminal:
+Criar o banco:
 
 ```bash
 cd banco
 for f in 01_estrutura.sql 02_dados.sql 03_programacao.sql 04_seguranca.sql; do
-  mysql -u root -p < $f
+  mysql -u root < $f
 done
 ```
 
-> O administrador (root) é usado **só para instalar** o banco. A aplicação conecta com `petcare_app_vet`.
+O root só é usado para criar o banco. A aplicação usa o usuário `petcare_app_vet`.
 
-### 2. Backend
+Para recriar o banco do zero, é só rodar os scripts de novo.
 
-Requer Java 17+. Na pasta `backend/`:
+### 2. API
 
 ```bash
+brew install openjdk@17 maven
+echo 'export JAVA_HOME=/opt/homebrew/opt/openjdk@17' >> ~/.zshrc
+echo 'export PATH="$JAVA_HOME/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+cd backend
 mvn spring-boot:run
 ```
 
-Teste: `http://localhost:8080/api/info` deve devolver `petcare_app_vet@%`.
+A API fica em `http://localhost:8080/api`. Para testar, abra `http://localhost:8080/api/info`, que mostra o usuário do banco que está conectado.
 
-Para usar outro usuário/senha sem mexer no código: variáveis de ambiente `DB_URL`, `DB_USER`, `DB_PASSWORD`.
+As rotas estão em `docs/API.md`.
 
-### 3. Frontend
+### Docker (opcional)
 
-Ver `docs/API.md`. A API já libera CORS, então o front pode rodar em qualquer porta (ex.: Live Server do VS Code). Alternativa: colocar os arquivos HTML/CSS/JS em `backend/src/main/resources/static/` e acessar `http://localhost:8080`.
+Quem tiver Docker pode subir o MySQL com `docker compose up -d` na raiz do projeto, no lugar do passo 1.
 
 ## Usuários do banco
 
-| Usuário MySQL | Senha (ambiente de aula) | Role | Uso |
-|---|---|---|---|
-| `petcare_app_admin` | `Admin@PetCare2026` | `petcare_admin_role` | administração dos dados |
-| `petcare_app_vet` | `Vet@PetCare2026` | `petcare_vet_role` | **usado pela API** |
-| `petcare_app_atendimento` | `Atend@PetCare2026` | `petcare_atendimento_role` | recepção (demo de acesso negado) |
+| Usuário | Senha | Perfil |
+|---|---|---|
+| `petcare_app_admin` | `Admin@PetCare2026` | administrador |
+| `petcare_app_vet` | `Vet@PetCare2026` | veterinário (usado pela API) |
+| `petcare_app_atendimento` | `Atend@PetCare2026` | recepção |
 
-## Checklist do enunciado
+## O que tem no banco
 
-| Requisito | Onde está |
-|---|---|
-| Tabelas com relacionamentos (incl. `usuarios` e `grupos_usuarios`) | `01_estrutura.sql` — 12 tabelas |
-| Índices justificados | `01_estrutura.sql` (comentários) + `demos/demo_indices.sql` |
-| ≥ 2 triggers | `trg_validar_consulta`, `trg_validar_prontuario`, `trg_bloquear_consulta_encerrada` |
-| ≥ 2 views | `vw_agenda_consultas`, `vw_historico_clinico` |
-| ≥ 2 procedures/functions | `sp_agendar_consulta`, `sp_registrar_vacinacao`, `sp_finalizar_atendimento`, `fn_gerar_id`, `fn_calcular_idade` |
-| Usuários e níveis de acesso, sem root | `04_seguranca.sql` + `demos/demo_acesso.sql` + `GET /api/info` |
-| Função própria de geração de ID, sem AUTO_INCREMENT | `fn_gerar_id` |
-| TCL (COMMIT/ROLLBACK) | `sp_finalizar_atendimento` + `demos/demo_tcl.sql` |
-| Exibir 1 view e 1 entidade | `GET /api/consultas/agenda` (view) e `GET /api/tutores/{id}/pets` (entidade) |
+- 12 tabelas, incluindo `usuarios` e `grupos_usuarios`
+- IDs gerados pela função `fn_gerar_id`, sem AUTO_INCREMENT
+- 8 índices
+- 3 triggers, 2 views, 3 procedures e 2 functions
+- Transação com COMMIT/ROLLBACK na procedure `sp_finalizar_atendimento`
+- 3 perfis de acesso com permissões diferentes
