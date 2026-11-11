@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PetCare – Agenda e Pets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #17262B;
+    --muted: #5B6B70;
+    --paper: #F3F7F6;
+    --surface: #FFFFFF;
+    --line: #D3DEDC;
+    --teal: #0E7C73;
+    --teal-dark: #0A5A54;
+    --teal-tint: #DCEFEC;
+    --amber: #8A4B08;
+    --amber-tint: #FCE9CC;
+    --rose: #9F1239;
+    --rose-tint: #FBE0E6;
+    --blue: #1D4E89;
+    --blue-tint: #DCE9F8;
+    --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+    --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+  header.top {
+    background: var(--teal-dark);
+    color: #fff;
+    padding: 28px 0 0;
+  }
+  .top-row {
+    display: flex; flex-wrap: wrap; align-items: center;
+    justify-content: space-between; gap: 12px 24px;
+  }
+  .brand { font-family: var(--display); font-weight: 700; font-size: 1.5rem; letter-spacing: -0.01em; }
+  .conn { display: flex; align-items: center; gap: 12px; font-size: .9rem; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px; border-radius: 999px;
+    background: rgba(255,255,255,.14);
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #F5C26B; }
+  .pill.ok .dot { background: #7BE0C3; }
+  .pill.err .dot { background: #FF8FA6; }
+  button.refresh {
+    font: inherit; font-weight: 500; color: #fff; cursor: pointer;
+    background: transparent; border: 1px solid rgba(255,255,255,.5);
+    border-radius: 8px; padding: 5px 14px;
+  }
+  button.refresh:hover { background: rgba(255,255,255,.14); }
+
+  .next { padding: 28px 0 30px; max-width: 760px; }
+  .next small { display: block; color: #BFE3DE; font-size: .95rem; margin-bottom: 4px; }
+  .next h1 {
+    margin: 0; font-family: var(--display); font-weight: 700;
+    font-size: clamp(1.7rem, 4.2vw, 2.7rem); line-height: 1.15; letter-spacing: -0.015em;
+  }
+  .next p { margin: 8px 0 0; color: #D6EEEA; }
+
+  nav.tabs { display: flex; gap: 4px; }
+  nav.tabs button {
+    font: inherit; font-weight: 600; cursor: pointer;
+    padding: 11px 22px; border: 0; border-radius: 10px 10px 0 0;
+    background: transparent; color: #CDE9E5;
+  }
+  nav.tabs button:hover { color: #fff; }
+  nav.tabs button[aria-selected="true"] { background: var(--paper); color: var(--ink); }
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 3px solid #F5C26B; outline-offset: 2px;
+  }
+
+  main { padding: 26px 0 60px; }
+  section[hidden] { display: none; }
+  .head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px 24px; margin-bottom: 14px; }
+  .head h2 { margin: 0; font-family: var(--display); font-size: 1.5rem; letter-spacing: -0.01em; }
+  .head .src { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
+  code { background: var(--teal-tint); color: var(--teal-dark); padding: 1px 6px; border-radius: 5px; font-size: .88em; }
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; }
+  .filters label { display: grid; gap: 3px; font-size: .82rem; color: var(--muted); }
+  select, input[type="search"] {
+    font: inherit; padding: 8px 10px; min-width: 170px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink);
+  }
+
+  .table-box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 760px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: .85rem; font-weight: 600; color: var(--muted); background: #F8FBFA; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: #F6FAF9; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .strong { font-weight: 600; }
+  .sub { color: var(--muted); font-size: .88rem; }
+
+  .chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .84rem; font-weight: 600; white-space: nowrap; }
+  .st-AGENDADA { background: var(--blue-tint); color: var(--blue); }
+  .st-CONFIRMADA { background: var(--teal-tint); color: var(--teal-dark); }
+  .st-EM_ATENDIMENTO { background: var(--amber-tint); color: var(--amber); }
+  .st-CONCLUIDA { background: #E4EAE8; color: #34454A; }
+  .st-CANCELADA { background: var(--rose-tint); color: var(--rose); }
+  .st-FALTOU { background: var(--rose-tint); color: var(--rose); }
+
+  .msg { padding: 28px 20px; text-align: center; color: var(--muted); }
+  .msg.error { color: var(--rose); text-align: left; max-width: 640px; margin: 0 auto; }
+  .msg strong { display: block; color: var(--ink); margin-bottom: 4px; }
+  .count { margin: 10px 2px 0; color: var(--muted); font-size: .88rem; }
+
+  .forms { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; align-items: start; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px 22px; }
+  .card h3 { margin: 0; font-family: var(--display); font-size: 1.2rem; letter-spacing: -0.01em; }
+  .card .src { margin: 2px 0 16px; color: var(--muted); font-size: .9rem; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+  .field { display: grid; gap: 4px; font-size: .82rem; color: var(--muted); }
+  .field.full { grid-column: 1 / -1; }
+  .field input, .field select, .field textarea {
+    font: inherit; color: var(--ink); width: 100%; min-width: 0;
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+  }
+  button.primary {
+    font: inherit; font-weight: 600; color: #fff; cursor: pointer;
+    background: var(--teal); border: 0; border-radius: 8px; padding: 10px 20px; margin-top: 18px;
+  }
+  button.primary:hover { background: var(--teal-dark); }
+  button.secundario {
+    font: inherit; font-weight: 600; color: var(--ink); cursor: pointer;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 9px 18px; margin: 18px 0 0 8px;
+  }
+  button.secundario:hover { background: #F6FAF9; }
+  .field textarea { resize: vertical; min-height: 58px; }
+  .card.finalizar { margin-bottom: 16px; border-color: var(--amber); }
+  .acoes { display: flex; flex-wrap: wrap; gap: 6px; }
+  button.acao {
+    font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    padding: 3px 10px; border-radius: 7px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--teal-dark);
+  }
+  button.acao:hover { background: var(--teal-tint); }
+  button.acao.perigo { color: var(--rose); }
+  button.acao.perigo:hover { background: var(--rose-tint); }
+  button.acao.principal { background: var(--teal); border-color: var(--teal); color: #fff; }
+  button.acao.principal:hover { background: var(--teal-dark); }
+  button.acao:disabled { opacity: .5; cursor: wait; }
+  .panel-fb { margin: 0 0 14px; }
+  button.primary:disabled { opacity: .6; cursor: wait; }
+  .feedback { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; font-size: .92rem; }
+  .feedback[hidden] { display: none; }
+  .feedback.ok { background: var(--teal-tint); color: var(--teal-dark); }
+  .feedback.erro { background: var(--rose-tint); color: var(--rose); }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand">PetCare</div>
+      <div class="conn">
+        <span id="conn" class="pill" role="status"><span class="dot"></span><span id="connText">Carregando dados…</span></span>
+        <button class="refresh" id="refresh" type="button">Atualizar</button>
+      </div>
+    </div>
+
+    <div class="next" id="next">
+      <small>Próxima consulta</small>
+      <h1>Carregando agenda…</h1>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="Seções">
+      <button role="tab" id="tab-agenda" aria-controls="panel-agenda" aria-selected="true" type="button">Agenda</button>
+      <button role="tab" id="tab-pets" aria-controls="panel-pets" aria-selected="false" type="button">Pets</button>
+      <button role="tab" id="tab-cadastros" aria-controls="panel-cadastros" aria-selected="false" type="button">Cadastros</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- VIEW: vw_agenda_consultas -->
+  <section id="panel-agenda" role="tabpanel" aria-labelledby="tab-agenda">
+    <div class="head">
+      <div>
+        <h2>Agenda de consultas</h2>
+        <p class="src">Dados da view <code>vw_agenda_consultas</code>, via <code>GET /api/consultas/agenda</code></p>
+      </div>
+      <div class="filters">
+        <label>Situação
+          <select id="fStatus">
+            <option value="">Todas</option>
+            <option value="AGENDADA">Agendada</option>
+            <option value="CONFIRMADA">Confirmada</option>
+            <option value="EM_ATENDIMENTO">Em atendimento</option>
+            <option value="CONCLUIDA">Concluída</option>
+            <option value="CANCELADA">Cancelada</option>
+            <option value="FALTOU">Faltou</option>
+          </select>
+        </label>
+        <label>Buscar
+          <input type="search" id="fBuscaAgenda" placeholder="Pet, tutor ou veterinário">
+        </label>
+      </div>
+    </div>
+    <form class="card finalizar" id="formFinalizar" hidden>
+      <h3 id="tituloFinalizar">Finalizar atendimento</h3>
+      <p class="src">Procedure <code>sp_finalizar_atendimento</code>: conclui a consulta e grava o prontuário na mesma transação</p>
+      <div class="grid">
+        <label class="field full">Anamnese
+          <textarea name="anamnese" rows="2"></textarea>
+        </label>
+        <label class="field full">Diagnóstico
+          <textarea name="diagnostico" rows="2" placeholder="Obrigatório para concluir"></textarea>
+        </label>
+        <label class="field full">Conduta
+          <textarea name="conduta" rows="2"></textarea>
+        </label>
+      </div>
+      <button class="primary" type="submit">Concluir atendimento</button>
+      <button class="secundario" type="button" id="fecharFinalizar">Fechar</button>
+      <p class="feedback" id="fbFinalizar" role="status" hidden></p>
+    </form>
+    <p class="feedback panel-fb" id="fbAgenda" role="status" hidden></p>
+    <div class="table-box" id="boxAgenda"></div>
+    <p class="count" id="countAgenda"></p>
+  </section>
+
+  <!-- ENTIDADE: pets -->
+  <section id="panel-pets" role="tabpanel" aria-labelledby="tab-pets" hidden>
+    <div class="head">
+      <div>
+        <h2>Pets cadastrados</h2>
+        <p class="src">Dados da tabela <code>pets</code>, via <code>GET /api/pets</code> (apenas pets ativos)</p>
+      </div>
+      <div class="filters">
+        <label>Buscar
+          <input type="search" id="fBuscaPets" placeholder="Nome, espécie ou raça">
+        </label>
+      </div>
+    </div>
+    <p class="feedback panel-fb" id="fbPets" role="status" hidden></p>
+    <div class="table-box" id="boxPets"></div>
+    <p class="count" id="countPets"></p>
+  </section>
+
+  <!-- CADASTROS: procedure sp_agendar_consulta e INSERT em pets -->
+  <section id="panel-cadastros" role="tabpanel" aria-labelledby="tab-cadastros" hidden>
+    <div class="head">
+      <div>
+        <h2>Cadastros</h2>
+        <p class="src">Os dados são gravados pela API e as regras são validadas pelo banco</p>
+      </div>
+    </div>
+
+    <div class="forms">
+      <form class="card" id="formConsulta">
+        <h3>Agendar consulta</h3>
+        <p class="src">Procedure <code>sp_agendar_consulta</code>, via <code>POST /api/consultas</code></p>
+        <div class="grid">
+          <label class="field full">Pet
+            <select name="idPet" id="cPet" required></select>
+          </label>
+          <label class="field full">Veterinário
+            <select name="idVeterinario" id="cVet" required></select>
+          </label>
+          <label class="field">Data e hora
+            <input type="datetime-local" name="dataHora" required>
+          </label>
+          <label class="field">Valor (R$)
+            <input type="number" name="valor" min="0" step="0.01" placeholder="150,00">
+          </label>
+          <label class="field full">Motivo
+            <input type="text" name="motivo" maxlength="255" required placeholder="Ex.: consulta de rotina">
+          </label>
+        </div>
+        <button class="primary" type="submit">Agendar</button>
+        <p class="feedback" id="fbConsulta" role="status" hidden></p>
+      </form>
+
+      <form class="card" id="formPet">
+        <h3 id="tituloPet">Cadastrar pet</h3>
+        <p class="src" id="srcPet">Tabela <code>pets</code>, via <code>POST /api/tutores/{id}/pets</code></p>
+        <div class="grid">
+          <label class="field full">Tutor
+            <select name="idTutor" id="pTutor" required></select>
+          </label>
+          <label class="field">Nome
+            <input type="text" name="nome" maxlength="80" required>
+          </label>
+          <label class="field">Espécie
+            <input type="text" name="especie" maxlength="40" required placeholder="Cachorro, Gato…">
+          </label>
+          <label class="field">Raça
+            <input type="text" name="raca" maxlength="80">
+          </label>
+          <label class="field">Sexo
+            <select name="sexo">
+              <option value="NAO_INFORMADO">Não informado</option>
+              <option value="MACHO">Macho</option>
+              <option value="FEMEA">Fêmea</option>
+            </select>
+          </label>
+          <label class="field">Nascimento
+            <input type="date" name="dataNascimento">
+          </label>
+          <label class="field">Peso (kg)
+            <input type="number" name="pesoKg" min="0.01" step="0.01">
+          </label>
+          <label class="field">Porte
+            <select name="porte">
+              <option value="NAO_INFORMADO">Não informado</option>
+              <option value="PEQUENO">Pequeno</option>
+              <option value="MEDIO">Médio</option>
+              <option value="GRANDE">Grande</option>
+            </select>
+          </label>
+          <label class="field">Alergias
+            <input type="text" name="alergias">
+          </label>
+        </div>
+        <button class="primary" type="submit" id="btnPet">Cadastrar</button>
+        <button class="secundario" type="button" id="cancelarEdicao" hidden>Cancelar edição</button>
+        <p class="feedback" id="fbPet" role="status" hidden></p>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  const API = '/api';
+
+  const STATUS = {
+    AGENDADA: 'Agendada', CONFIRMADA: 'Confirmada', EM_ATENDIMENTO: 'Em atendimento',
+    CONCLUIDA: 'Concluída', CANCELADA: 'Cancelada', FALTOU: 'Faltou'
+  };
+  const SEXO = { MACHO: 'Macho', FEMEA: 'Fêmea', NAO_INFORMADO: 'Não informado' };
+  const PORTE = { PEQUENO: 'Pequeno', MEDIO: 'Médio', GRANDE: 'Grande', NAO_INFORMADO: 'Não informado' };
+
+  const $ = (id) => document.getElementById(id);
+  const state = { agenda: [], pets: [], vets: [], tutores: [], agendaOk: false, petsOk: false,
+    editandoPet: null, finalizando: null };
+
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const norm = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  // DATE (yyyy-MM-dd) vira data local; DATETIME vira Date normal
+  function parseData(v) {
+    if (v == null) return null;
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      const [a, m, d] = v.split('-').map(Number);
+      return new Date(a, m - 1, d);
+    }
+    const d = new Date(v);
+    return isNaN(d) ? null : d;
+  }
+  const fmtDataHora = (v) => {
+    const d = parseData(v);
+    return d ? d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+  };
+  function idade(v) {
+    const n = parseData(v);
+    if (!n) return '—';
+    const hoje = new Date();
+    let meses = (hoje.getFullYear() - n.getFullYear()) * 12 + hoje.getMonth() - n.getMonth();
+    if (hoje.getDate() < n.getDate()) meses--;
+    if (meses < 12) return meses <= 1 ? '1 mês' : `${Math.max(meses, 0)} meses`;
+    const anos = Math.floor(meses / 12);
+    return anos === 1 ? '1 ano' : `${anos} anos`;
+  }
+
+  async function getJSON(path) {
+    const r = await fetch(API + path, { headers: { Accept: 'application/json' } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+
+  function erroHTML(nome) {
+    return `<div class="msg error"><strong>Não foi possível carregar ${esc(nome)}.</strong>
+      Confirme que o backend está rodando e abra esta página em
+      <code>http://localhost:8080</code> (não direto pelo arquivo). Depois clique em Atualizar.</div>`;
+  }
+
+  function renderProxima() {
+    const agora = new Date();
+    const futuras = state.agenda
+      .filter((c) => ['AGENDADA', 'CONFIRMADA'].includes(c.status) && parseData(c.data_hora) >= agora)
+      .sort((a, b) => parseData(a.data_hora) - parseData(b.data_hora));
+    const el = $('next');
+    if (!state.agendaOk) {
+      el.innerHTML = '<small>Próxima consulta</small><h1>Agenda indisponível</h1>';
+      return;
+    }
+    if (!futuras.length) {
+      el.innerHTML = '<small>Próxima consulta</small><h1>Nenhuma consulta marcada</h1>';
+      return;
+    }
+    const c = futuras[0];
+    const d = parseData(c.data_hora);
+    const dia = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    el.innerHTML = `<small>Próxima consulta</small>
+      <h1>${esc(c.pet)}, ${esc(dia)} às ${esc(hora)}</h1>
+      <p>${esc(c.motivo)}. Tutor: ${esc(c.tutor)}. Veterinário: ${esc(c.veterinario)}.</p>`;
+  }
+
+  function renderAgenda() {
+    const box = $('boxAgenda');
+    if (!state.agendaOk) { box.innerHTML = erroHTML('a agenda'); $('countAgenda').textContent = ''; return; }
+    const st = $('fStatus').value;
+    const q = norm($('fBuscaAgenda').value);
+    const lista = state.agenda.filter((c) =>
+      (!st || c.status === st) &&
+      (!q || norm(`${c.pet} ${c.tutor} ${c.veterinario}`).includes(q)));
+
+    if (!lista.length) {
+      box.innerHTML = `<div class="msg"><strong>Nenhuma consulta encontrada</strong>
+        ${state.agenda.length ? 'Ajuste os filtros para ver outras consultas.' :
+          'Agende uma consulta pela API ou rode os scripts da pasta banco.'}</div>`;
+    } else {
+      box.innerHTML = `<table>
+        <thead><tr>
+          <th>Data e hora</th><th>Pet</th><th>Tutor</th><th>Veterinário</th>
+          <th>Motivo</th><th class="num">Valor</th><th>Situação</th><th>Ações</th>
+        </tr></thead>
+        <tbody>${lista.map((c) => `<tr>
+          <td>${esc(fmtDataHora(c.data_hora))}</td>
+          <td class="strong">${esc(c.pet)}</td>
+          <td>${esc(c.tutor)}</td>
+          <td>${esc(c.veterinario)}</td>
+          <td>${esc(c.motivo)}</td>
+          <td class="num">${c.valor == null ? '—' : esc(brl.format(c.valor))}</td>
+          <td><span class="chip st-${esc(c.status)}">${esc(STATUS[c.status] || c.status)}</span></td>
+          <td>${acoesConsulta(c)}</td>
+        </tr>`).join('')}</tbody></table>`;
+    }
+    $('countAgenda').textContent = `${lista.length} de ${state.agenda.length} consultas`;
+  }
+
+  function renderPets() {
+    const box = $('boxPets');
+    if (!state.petsOk) { box.innerHTML = erroHTML('os pets'); $('countPets').textContent = ''; return; }
+    const q = norm($('fBuscaPets').value);
+    const lista = state.pets.filter((p) => !q || norm(`${p.nome} ${p.especie} ${p.raca}`).includes(q));
+
+    if (!lista.length) {
+      box.innerHTML = `<div class="msg"><strong>Nenhum pet encontrado</strong>
+        ${state.pets.length ? 'Tente outro termo de busca.' : 'Cadastre um pet pela API ou rode os scripts da pasta banco.'}</div>`;
+    } else {
+      box.innerHTML = `<table>
+        <thead><tr>
+          <th>Nome</th><th>Espécie</th><th>Raça</th><th>Sexo</th>
+          <th>Idade</th><th class="num">Peso</th><th>Porte</th><th>Alergias</th><th>Ações</th>
+        </tr></thead>
+        <tbody>${lista.map((p) => `<tr>
+          <td class="strong">${esc(p.nome)}</td>
+          <td>${esc(p.especie)}</td>
+          <td>${esc(p.raca || '—')}</td>
+          <td>${esc(SEXO[p.sexo] || p.sexo || '—')}</td>
+          <td>${esc(idade(p.data_nascimento))}</td>
+          <td class="num">${p.peso_kg == null ? '—' : esc(Number(p.peso_kg).toLocaleString('pt-BR', { minimumFractionDigits: 1 })) + ' kg'}</td>
+          <td>${esc(PORTE[p.porte] || p.porte || '—')}</td>
+          <td>${esc(p.alergias || '—')}</td>
+          <td><div class="acoes">
+            <button type="button" class="acao" data-acao="editar" data-id="${esc(p.id_pet)}">Editar</button>
+            <button type="button" class="acao perigo" data-acao="excluir" data-id="${esc(p.id_pet)}">Excluir</button>
+          </div></td>
+        </tr>`).join('')}</tbody></table>`;
+    }
+    $('countPets').textContent = `${lista.length} de ${state.pets.length} pets`;
+  }
+
+  function renderStatus() {
+    const pill = $('conn');
+    const ok = state.agendaOk && state.petsOk;
+    const fail = !state.agendaOk && !state.petsOk;
+    pill.className = 'pill ' + (ok ? 'ok' : fail ? 'err' : '');
+    $('connText').textContent = ok ? 'Conectado ao banco' : fail ? 'Sem conexão com a API' : 'Carga parcial dos dados';
+  }
+
+  async function carregar() {
+    $('conn').className = 'pill';
+    $('connText').textContent = 'Carregando dados…';
+    const [a, p, v, t] = await Promise.allSettled([
+      getJSON('/consultas/agenda'), getJSON('/pets'), getJSON('/veterinarios'), getJSON('/tutores')]);
+    state.agendaOk = a.status === 'fulfilled';
+    state.petsOk = p.status === 'fulfilled';
+    state.agenda = state.agendaOk ? a.value : [];
+    state.pets = state.petsOk ? p.value : [];
+    state.vets = v.status === 'fulfilled' ? v.value : [];
+    state.tutores = t.status === 'fulfilled' ? t.value : [];
+    renderStatus(); renderProxima(); renderAgenda(); renderPets(); renderOpcoes();
+  }
+
+  // abas
+  function abrirAba(nome) {
+    ['agenda', 'pets', 'cadastros'].forEach((n) => {
+      const ativa = n === nome;
+      $('tab-' + n).setAttribute('aria-selected', String(ativa));
+      $('panel-' + n).hidden = !ativa;
+    });
+  }
+  $('tab-agenda').addEventListener('click', () => abrirAba('agenda'));
+  $('tab-pets').addEventListener('click', () => abrirAba('pets'));
+  $('tab-cadastros').addEventListener('click', () => abrirAba('cadastros'));
+
+  $('fStatus').addEventListener('change', renderAgenda);
+  $('fBuscaAgenda').addEventListener('input', renderAgenda);
+  $('fBuscaPets').addEventListener('input', renderPets);
+  $('refresh').addEventListener('click', carregar);
+
+  // cadastros
+  function preencher(sel, lista, valor, texto) {
+    const atual = sel.value;
+    sel.innerHTML = '<option value="">Selecione…</option>' +
+      lista.map((x) => `<option value="${esc(x[valor])}">${esc(texto(x))}</option>`).join('');
+    sel.value = atual;
+  }
+  function renderOpcoes() {
+    preencher($('cPet'), state.pets, 'id_pet', (p) => p.tutor ? `${p.nome} (${p.tutor})` : p.nome);
+    preencher($('cVet'), state.vets, 'id_veterinario', (v) => `${v.nome} – ${v.especialidade || 'Clínica geral'}`);
+    preencher($('pTutor'), state.tutores, 'id_tutor', (t) => t.nome);
+  }
+
+  const vazio = (v) => (v == null || String(v).trim() === '' ? null : v);
+
+  async function enviar(path, corpo, metodo = 'POST') {
+    const r = await fetch(API + path, {
+      method: metodo,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: corpo === undefined ? undefined : JSON.stringify(corpo)
+    });
+    let dados = {};
+    try { dados = await r.json(); } catch (e) { /* resposta sem corpo */ }
+    if (!r.ok) throw new Error(dados.erro || 'Erro HTTP ' + r.status);
+    return dados;
+  }
+
+  function aviso(el, ok, texto) {
+    el.hidden = false;
+    el.className = 'feedback ' + (ok ? 'ok' : 'erro');
+    el.textContent = texto;
+  }
+
+  async function aoEnviar(form, fb, acao, sucesso) {
+    const botao = form.querySelector('button[type="submit"]');
+    botao.disabled = true;
+    try {
+      await acao(new FormData(form));
+      form.reset();
+      await carregar();
+      aviso(fb, true, sucesso);
+      return true;
+    } catch (e) {
+      aviso(fb, false, e.message);
+      return false;
+    } finally {
+      botao.disabled = false;
+    }
+  }
+
+  $('formConsulta').addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    aoEnviar(ev.target, $('fbConsulta'), (f) => enviar('/consultas', {
+      idPet: f.get('idPet'),
+      idVeterinario: f.get('idVeterinario'),
+      dataHora: f.get('dataHora'),
+      motivo: f.get('motivo'),
+      valor: vazio(f.get('valor')) === null ? null : Number(f.get('valor'))
+    }), 'Consulta agendada. Ela já aparece na aba Agenda.');
+  });
+
+  const enc = encodeURIComponent;
+
+  $('formPet').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const id = state.editandoPet;
+    const original = state.pets.find((p) => p.id_pet === id);
+    const dadosPet = (f) => ({
+      nome: f.get('nome'),
+      especie: f.get('especie'),
+      raca: vazio(f.get('raca')),
+      sexo: f.get('sexo'),
+      dataNascimento: vazio(f.get('dataNascimento')),
+      pesoKg: vazio(f.get('pesoKg')) === null ? null : Number(f.get('pesoKg')),
+      porte: f.get('porte'),
+      alergias: vazio(f.get('alergias')),
+      observacoes: original ? original.observacoes ?? null : null
+    });
+    const ok = await aoEnviar(ev.target, $('fbPet'),
+      (f) => id
+        ? enviar(`/pets/${enc(id)}`, dadosPet(f), 'PUT')
+        : enviar(`/tutores/${enc(f.get('idTutor'))}/pets`, dadosPet(f)),
+      id ? 'Alterações salvas.' : 'Pet cadastrado. Ele já aparece na aba Pets.');
+    if (ok && id) sairEdicao(false);
+  });
+
+  // editar e excluir pet
+  function abrirEdicaoPet(id) {
+    const p = state.pets.find((x) => x.id_pet === id);
+    if (!p) return;
+    const f = $('formPet');
+    f.reset();
+    state.editandoPet = id;
+    f.elements.idTutor.value = p.id_tutor || '';
+    f.elements.idTutor.disabled = true;
+    f.elements.nome.value = p.nome || '';
+    f.elements.especie.value = p.especie || '';
+    f.elements.raca.value = p.raca || '';
+    f.elements.sexo.value = p.sexo || 'NAO_INFORMADO';
+    f.elements.dataNascimento.value = p.data_nascimento || '';
+    f.elements.pesoKg.value = p.peso_kg ?? '';
+    f.elements.porte.value = p.porte || 'NAO_INFORMADO';
+    f.elements.alergias.value = p.alergias || '';
+    $('tituloPet').textContent = `Editar pet: ${p.nome}`;
+    $('srcPet').innerHTML = 'Tabela <code>pets</code>, via <code>PUT /api/pets/{id}</code>';
+    $('btnPet').textContent = 'Salvar alterações';
+    $('cancelarEdicao').hidden = false;
+    $('fbPet').hidden = true;
+    abrirAba('cadastros');
+    f.scrollIntoView({ block: 'start' });
+  }
+
+  function sairEdicao(limpar = true) {
+    const f = $('formPet');
+    state.editandoPet = null;
+    f.elements.idTutor.disabled = false;
+    if (limpar) { f.reset(); $('fbPet').hidden = true; }
+    $('tituloPet').textContent = 'Cadastrar pet';
+    $('srcPet').innerHTML = 'Tabela <code>pets</code>, via <code>POST /api/tutores/{id}/pets</code>';
+    $('btnPet').textContent = 'Cadastrar';
+    $('cancelarEdicao').hidden = true;
+  }
+  $('cancelarEdicao').addEventListener('click', () => sairEdicao());
+
+  $('boxPets').addEventListener('click', async (ev) => {
+    const b = ev.target.closest('button[data-acao]');
+    if (!b) return;
+    const p = state.pets.find((x) => x.id_pet === b.dataset.id);
+    if (!p) return;
+    if (b.dataset.acao === 'editar') return abrirEdicaoPet(p.id_pet);
+    if (!confirm(`Excluir ${p.nome}? Ele some das listas, mas o histórico clínico continua no banco.`)) return;
+    b.disabled = true;
+    try {
+      await enviar(`/pets/${enc(p.id_pet)}`, undefined, 'DELETE');
+      if (state.editandoPet === p.id_pet) sairEdicao();
+      await carregar();
+      aviso($('fbPets'), true, `${p.nome} foi excluído das listas. O histórico continua no banco.`);
+    } catch (e) {
+      aviso($('fbPets'), false, e.message);
+      b.disabled = false;
+    }
+  });
+
+  // ações da agenda
+  function acoesConsulta(c) {
+    const btn = (acao, rotulo, cls = '') =>
+      `<button type="button" class="acao ${cls}" data-acao="${acao}" data-id="${esc(c.id_consulta)}">${rotulo}</button>`;
+    const porStatus = {
+      AGENDADA: btn('CONFIRMADA', 'Confirmar') + btn('CANCELADA', 'Cancelar', 'perigo'),
+      CONFIRMADA: btn('EM_ATENDIMENTO', 'Iniciar') + btn('FALTOU', 'Faltou', 'perigo') + btn('CANCELADA', 'Cancelar', 'perigo'),
+      EM_ATENDIMENTO: btn('finalizar', 'Finalizar', 'principal')
+    };
+    return porStatus[c.status] ? `<div class="acoes">${porStatus[c.status]}</div>` : '<span class="sub">—</span>';
+  }
+
+  const MSG_STATUS = {
+    CONFIRMADA: 'Consulta confirmada.',
+    EM_ATENDIMENTO: 'Atendimento iniciado. Use "Finalizar" para concluir.',
+    CANCELADA: 'Consulta cancelada.',
+    FALTOU: 'Falta registrada.'
+  };
+
+  $('boxAgenda').addEventListener('click', async (ev) => {
+    const b = ev.target.closest('button[data-acao]');
+    if (!b) return;
+    const id = b.dataset.id;
+    const acao = b.dataset.acao;
+    if (acao === 'finalizar') return abrirFinalizar(id);
+    if ((acao === 'CANCELADA' || acao === 'FALTOU') &&
+        !confirm(acao === 'CANCELADA' ? 'Cancelar esta consulta?' : 'Registrar falta nesta consulta?')) return;
+    b.disabled = true;
+    try {
+      await enviar(`/consultas/${enc(id)}/status?valor=${acao}`, undefined, 'PATCH');
+      await carregar();
+      aviso($('fbAgenda'), true, MSG_STATUS[acao]);
+    } catch (e) {
+      aviso($('fbAgenda'), false, e.message);
+      b.disabled = false;
+    }
+  });
+
+  // finalizar atendimento (transação)
+  function abrirFinalizar(id) {
+    const c = state.agenda.find((x) => x.id_consulta === id);
+    if (!c) return;
+    state.finalizando = id;
+    const f = $('formFinalizar');
+    f.reset();
+    $('tituloFinalizar').textContent = `Finalizar atendimento: ${c.pet}, ${fmtDataHora(c.data_hora)}`;
+    $('fbFinalizar').hidden = true;
+    $('fbAgenda').hidden = true;
+    f.hidden = false;
+    f.scrollIntoView({ block: 'start' });
+  }
+
+  $('fecharFinalizar').addEventListener('click', () => {
+    $('formFinalizar').hidden = true;
+    state.finalizando = null;
+  });
+
+  $('formFinalizar').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const f = new FormData(ev.target);
+    const botao = ev.target.querySelector('button[type="submit"]');
+    botao.disabled = true;
+    try {
+      await enviar(`/consultas/${enc(state.finalizando)}/finalizar`, {
+        anamnese: vazio(f.get('anamnese')),
+        diagnostico: f.get('diagnostico'),
+        conduta: vazio(f.get('conduta')),
+        observacoes: null
+      });
+      ev.target.hidden = true;
+      state.finalizando = null;
+      await carregar();
+      aviso($('fbAgenda'), true, 'Atendimento concluído: status e prontuário foram gravados juntos (COMMIT).');
+    } catch (e) {
+      await carregar();
+      aviso($('fbFinalizar'), false, `${e.message} Nada foi gravado e a consulta continua em atendimento (ROLLBACK).`);
+    } finally {
+      botao.disabled = false;
+    }
+  });
+
+  carregar();
+})();
+</script>
+</body>
+</html>

@@ -7,7 +7,7 @@ Banco em MySQL, API em Spring Boot e frontend web.
 
 - `banco/` – scripts do MySQL, executados na ordem 01 a 04
 - `banco/demos/` – scripts usados na apresentação (transações, acessos e índices)
-- `backend/` – API em Java 17 com Spring Boot
+- `backend/` – API em Java 17 com Spring Boot; o frontend fica em `backend/src/main/resources/static`
 - `docs/` – DER, documentação da API e roteiro da apresentação
 
 ## Como rodar (Mac)
@@ -46,7 +46,7 @@ cd backend
 mvn spring-boot:run
 ```
 
-A API fica em `http://localhost:8080/api`. Para testar, abra `http://localhost:8080/api/info`, que mostra o usuário do banco que está conectado.
+O sistema abre em `http://localhost:8080` e a API fica em `http://localhost:8080/api`. Para testar, abra `http://localhost:8080/api/info`, que mostra o usuário do banco que está conectado.
 
 As rotas estão em `docs/API.md`.
 

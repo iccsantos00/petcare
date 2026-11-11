@@ -118,7 +118,9 @@ public class PetCareController {
     @GetMapping("/pets")
     public List<Map<String, Object>> listarTodosPets() {
         return banco.queryForList("""
-            SELECT p.id_pet, p.nome, p.especie, u.nome AS tutor
+            SELECT p.id_pet, p.id_tutor, p.nome, p.especie, p.raca, p.sexo, p.data_nascimento,
+                   fn_calcular_idade(p.data_nascimento) AS idade,
+                   p.peso_kg, p.porte, p.alergias, p.observacoes, u.nome AS tutor
             FROM pets p
             JOIN tutores t  ON t.id_tutor = p.id_tutor
             JOIN usuarios u ON u.id_usuario = t.id_usuario
@@ -159,6 +161,26 @@ public class PetCareController {
             pet.alergias(), pet.observacoes());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("idPet", id));
+    }
+
+    @PutMapping("/pets/{idPet}")
+    public ResponseEntity<Void> editarPet(
+        @PathVariable String idPet,
+        @Valid @RequestBody PetRequest pet
+    ) {
+        int linhas = banco.update("""
+            UPDATE pets
+            SET nome = ?, especie = ?, raca = ?, sexo = ?, data_nascimento = ?,
+                peso_kg = ?, porte = ?, alergias = ?, observacoes = ?
+            WHERE id_pet = ? AND ativo = TRUE
+            """,
+            pet.nome(), pet.especie(), pet.raca(),
+            maiusculoOuPadrao(pet.sexo(), "NAO_INFORMADO"),
+            pet.dataNascimento(), pet.pesoKg(),
+            maiusculoOuPadrao(pet.porte(), "NAO_INFORMADO"),
+            pet.alergias(), pet.observacoes(), idPet);
+
+        return linhas > 0 ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     // Exclusão lógica: o pet some das listas, mas o histórico clínico continua.

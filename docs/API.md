@@ -23,7 +23,7 @@ Todo erro volta como `{ "erro": "mensagem" }`. Mostre `erro` na tela:
 | GET | `/tutores` | `[{ id_tutor, nome, email, telefone, cidade, uf }]` |
 | GET | `/veterinarios` | `[{ id_veterinario, nome, crmv, especialidade }]` |
 | GET | `/vacinas` | `[{ id_vacina, nome, fabricante, especie_indicada }]` |
-| GET | `/pets` | `[{ id_pet, nome, especie, tutor }]` (todos os ativos) |
+| GET | `/pets` | `[{ id_pet, nome, especie, raca, sexo, data_nascimento, idade, peso_kg, porte, alergias, tutor }]` (todos os ativos) |
 | GET | `/tutores/{idTutor}/pets` | `[{ id_pet, nome, especie, raca, sexo, data_nascimento, idade, peso_kg, porte, alergias, observacoes }]` |
 | GET | `/pets/{idPet}/vacinacoes` | `[{ id_vacinacao, vacina, data_aplicacao, proxima_dose, lote }]` |
 | GET | `/consultas/agenda` | **VIEW** `[{ id_consulta, data_hora, status, motivo, id_pet, pet, especie, idade_pet, tutor, telefone_tutor, veterinario, valor }]` |
@@ -41,7 +41,9 @@ Datas chegam como `"2026-11-10"` e data/hora como `"2026-11-10T14:30:00"`.
 ```
 `sexo`: MACHO | FEMEA | NAO_INFORMADO · `porte`: PEQUENO | MEDIO | GRANDE | NAO_INFORMADO
 
-**Desativar pet** — `DELETE /pets/{idPet}` → 204
+**Editar pet** — `PUT /pets/{idPet}` → 204 (mesmo JSON do cadastro; o tutor não muda)
+
+**Desativar pet** — `DELETE /pets/{idPet}` → 204 (exclusão lógica: `ativo = FALSE`)
 
 **Agendar consulta** — `POST /consultas` → 201 `{ idConsulta }`
 ```json
